@@ -1,6 +1,7 @@
 #include "EnrollFaceFromImageFunction.h"
 
 #include <stdio.h>
+#include <ros/ros.h>
 
 #include <NCore.h>
 #include <NBiometricClient.h>
@@ -23,7 +24,7 @@ NResult ObtainComponents(NChar *ipAddress, NChar *port)
   result = NLicenseObtainComponents(ipAddress, port, components, &available);
   if (NFailed(result))
   {
-    result = PrintErrorMsgWithLastError(N_T("NLicenseObtainComponents() failed, result = %d\n"), result);
+    result = PrintErrorMsgWithLastError(N_T("(1) NLicenseObtainComponents() failed, result = %d\n"), result);
     return result;
   }
   if (!available)
@@ -37,7 +38,7 @@ NResult ObtainComponents(NChar *ipAddress, NChar *port)
   result = NLicenseObtainComponents(ipAddress, port, additionalComponents, &additionalObtained);
   if (NFailed(result))
   {
-    result = PrintErrorMsgWithLastError(N_T("NLicenseObtainComponents() failed, result = %d\n"), result);
+    result = PrintErrorMsgWithLastError(N_T("(2) NLicenseObtainComponents() failed, result = %d\n"), result);
     return result;
   }
 }
@@ -59,8 +60,6 @@ NResult EnrollFaceFromImageFunction(const char *templateFileName, void (*getImag
   HNBiometricClient hBiometricClient = NULL;
   HNBuffer hBuffer = NULL;
   HNLAttributes hLAttributes = NULL;
-  HNMediaReader hReader = NULL;
-  HNMediaSource hSource = NULL;
   HNFileEnumerator hEnumerator = NULL;
   HNBiometricTask hBiometricTask = NULL;
   HNImage hImage = NULL;
@@ -70,16 +69,7 @@ NResult EnrollFaceFromImageFunction(const char *templateFileName, void (*getImag
   NInt facesDetected = 0;
   NBiometricStatus biometricStatus = nbsNone;
   NRect boundingRect;
-  NLFeaturePoint leftEyePoint;
-  NLFeaturePoint rightEyePoint;
-  NLFeaturePoint noseTipPoint;
-  NLFeaturePoint mouthCenterPoint;
 
-  HNString hFileName = NULL;
-  HNString hPath = NULL;
-
-  NBool next = NTrue;
-  NBool isReaderUsed = NFalse;
   NBool wasImageNull = NFalse;
   const NChar * szBiometricStatus = NULL;
 
@@ -163,17 +153,6 @@ NResult EnrollFaceFromImageFunction(const char *templateFileName, void (*getImag
     goto FINALLY;
   }
 
-  if(isReaderUsed)
-  {
-    // start media reader
-    result = NMediaReaderStart(hReader);
-    if (NFailed(result))
-    {
-      result = PrintErrorMsgWithLastError(N_T("NMediaReaderStart() failed (result = %d)!"), result);
-      goto FINALLY;
-    }
-  }
-
   while (biometricStatus == nbsNone)
   {
 
@@ -233,17 +212,6 @@ NResult EnrollFaceFromImageFunction(const char *templateFileName, void (*getImag
     }
   }
 
-  if(isReaderUsed)
-  {
-    // stop reader
-    result = NMediaReaderStop(hReader);
-    if (NFailed(result))
-    {
-      result = PrintErrorMsgWithLastError(N_T("NMediaReaderStop() failed (result = %d)!"), result);
-      goto FINALLY;
-    }
-  }
-
   // reset HasMoreSamples value since we finished extracting images
   result = NBiometricSetHasMoreSamples(hFace, NFalse);
   if (NFailed(result))
@@ -273,8 +241,6 @@ NResult EnrollFaceFromImageFunction(const char *templateFileName, void (*getImag
 
   if (biometricStatus == nbsOk)
   {
-   printf(N_T("template extracted\n"));
-
     // retrieve the template from subject
     result = NSubjectGetTemplateBuffer(hSubject, &hBuffer);
     if (NFailed(result))
@@ -290,7 +256,7 @@ NResult EnrollFaceFromImageFunction(const char *templateFileName, void (*getImag
       goto FINALLY;
     }
 
-   printf(N_T("template saved successfully\n"));
+   ROS_INFO("template saved successfully");
   }
   else
   {
@@ -309,8 +275,7 @@ NResult EnrollFaceFromImageFunction(const char *templateFileName, void (*getImag
       goto FINALLY;
     }
 
-   printf(N_T("template extraction failed!\n"));
-   printf(N_T("biometric status = %s.\n\n"), szBiometricStatus);
+   ROS_INFO("template extraction failed!\nbiometric status = %s", szBiometricStatus);
 
     // retrieve the error message
     {
@@ -361,87 +326,9 @@ NResult EnrollFaceFromImageFunction(const char *templateFileName, void (*getImag
       goto FINALLY;
     }
 
-    printf(N_T("found face:\n"));
-    printf(N_T("\tlocation = (%d, %d), width = %d, height = %d\n"),
+    ROS_INFO("found face: location = (%d, %d), width = %d, height = %d",
       boundingRect.X, boundingRect.Y,
       boundingRect.Width, boundingRect.Height);
-
-    // retrieve left eye center of the face from attributes array
-    result = NLAttributesGetLeftEyeCenter(hLAttributes, &leftEyePoint);
-    if (NFailed(result))
-    {
-      result = PrintErrorMsgWithLastError(N_T("NLAttributesGetLeftEyeCenter() failed (result = %d)!"), result);
-      goto FINALLY;
-    }
-
-    // retrieve right eye center of the face from attributes array
-    result = NLAttributesGetRightEyeCenter(hLAttributes, &rightEyePoint);
-    if (NFailed(result))
-    {
-      result = PrintErrorMsgWithLastError(N_T("NLAttributesGetRightEyeCenter() failed (result = %d)!"), result);
-      goto FINALLY;
-    }
-
-    if (leftEyePoint.Confidence > 0 || rightEyePoint.Confidence > 0)
-    {
-      printf(N_T("\tfound eyes:\n"));
-      if(rightEyePoint.Confidence > 0)
-      {
-        printf(N_T("\t\tright: location = (%d, %d), confidence = %d\n"),
-          rightEyePoint.X, rightEyePoint.Y,
-          rightEyePoint.Confidence);
-      }
-      if(leftEyePoint.Confidence > 0)
-      {
-        printf(N_T("\t\tleft: location = (%d, %d), confidence = %d\n"),
-          leftEyePoint.X, leftEyePoint.Y,
-          leftEyePoint.Confidence);
-      }
-    }
-
-    {
-      NBool hasEx = NFalse;
-      result = NLicenseIsComponentActivated(additionalComponents, &hasEx);
-      if (NFailed(result))
-      {
-        result = PrintErrorMsgWithLastError(N_T("NLicenseIsComponentActivated() failed (result = %d)!"), result);
-        goto FINALLY;
-      }
-      if (hasEx)
-      {
-        // retrieve nose tip center of the face from attributes array
-        result = NLAttributesGetNoseTip(hLAttributes, &noseTipPoint);
-        if (NFailed(result))
-        {
-          result = PrintErrorMsgWithLastError(N_T("NLAttributesGetNoseTip() failed (result = %d)!"), result);
-          goto FINALLY;
-        }
-
-        if(noseTipPoint.Confidence > 0)
-        {
-          printf(N_T("\tfound nose:\n"));
-          printf(N_T("\t\tlocation = (%d, %d), confidence = %d\n"),
-            noseTipPoint.X, noseTipPoint.Y,
-            noseTipPoint.Confidence);
-        }
-
-        // retrieve mouth center of the face from attributes array
-        result = NLAttributesGetMouthCenter(hLAttributes, &mouthCenterPoint);
-        if (NFailed(result))
-        {
-          result = PrintErrorMsgWithLastError(N_T("NLAttributesGetMouthCenter() failed (result = %d)!"), result);
-          goto FINALLY;
-        }
-
-        if(mouthCenterPoint.Confidence > 0)
-        {
-          printf(N_T("\tfound mouth:\n"));
-          printf(N_T("\t\tlocation = (%d, %d), confidence = %d\n"),
-            mouthCenterPoint.X, mouthCenterPoint.Y,
-            mouthCenterPoint.Confidence);
-        }
-      }
-    }
   }
 
   result = N_OK;
@@ -457,20 +344,12 @@ FINALLY:
     if (NFailed(result2)) PrintErrorMsg(N_T("NObjectSet() failed (result = %d)!"), result2);
     result2 = NObjectSet(NULL, (HNObject*) &hLAttributes);
     if (NFailed(result2)) PrintErrorMsg(N_T("NObjectSet() failed (result = %d)!"), result2);
-    result2 = NObjectSet(NULL, (HNObject*) &hReader);
-    if (NFailed(result2)) PrintErrorMsg(N_T("NObjectSet() failed (result = %d)!"), result2);
-    result2 = NObjectSet(NULL, (HNObject*) &hSource);
-    if (NFailed(result2)) PrintErrorMsg(N_T("NObjectSet() failed (result = %d)!"), result2);
     result2 = NObjectSet(NULL, (HNObject*) &hEnumerator);
     if (NFailed(result2)) PrintErrorMsg(N_T("NObjectSet() failed (result = %d)!"), result2);
     result2 = NObjectSet(NULL, (HNObject*) &hBiometricTask);
     if (NFailed(result2)) PrintErrorMsg(N_T("NObjectSet() failed (result = %d)!"), result2);
     result2 = NObjectSet(NULL, (HNObject*) &hImage);
     if (NFailed(result2)) PrintErrorMsg(N_T("NObjectSet() failed (result = %d)!"), result2);
-    result2 = NStringSet(NULL, &hPath);
-    if (NFailed(result2)) PrintErrorMsg(N_T("NStringSet() failed (result = %d)!"), result2);
-    result2 = NStringSet(NULL, &hFileName);
-    if (NFailed(result2)) PrintErrorMsg(N_T("NStringSet() failed (result = %d)!"), result2);
     result2 = NStringSet(NULL, &hBiometricStatus);
     if (NFailed(result2)) PrintErrorMsg(N_T("NStringSet() failed (result = %d)!"), result2);
   }
