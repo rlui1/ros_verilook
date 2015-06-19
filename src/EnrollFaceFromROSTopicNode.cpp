@@ -1,9 +1,10 @@
 #include <ros/ros.h>
 #include "std_msgs/String.h"
 #include "sensor_msgs/Image.h"
+#include "sensor_msgs/RegionOfInterest.h"
 
-#include "ros_verilook/Enroll.h"
-#include "EnrollFaceFromImageFunction.h"
+#include "ros_verilook/CreateTemplate.h"
+#include "EnrollFaceFromImageFunction.hpp"
 #include "TutorialUtils.h"
 
 #include <boost/thread.hpp>
@@ -52,13 +53,18 @@ void getImage(HNImage *phImage)
 }
 
 // Invoke the main big "create template" or "enroll face" routine.
-bool handleEnrollService(ros_verilook::Enroll::Request& request,
-  ros_verilook::Enroll::Response& response)
+bool handleCreateService(ros_verilook::CreateTemplate::Request& request,
+  ros_verilook::CreateTemplate::Response& response)
 {
-  ROS_INFO("template request: %s", request.output_filename.c_str());
-  NResult result = EnrollFaceFromImageFunction(request.output_filename.c_str(), getImage);
-  response.success = !NFailed(result);
-  return true;
+  ROS_INFO("create template request: %s", request.output_filename.c_str());
+  NRect boundingRect;
+  NResult result = EnrollFaceFromImageFunction(request.output_filename,
+    getImage, &boundingRect);
+  response.face_position.x_offset = boundingRect.X;
+  response.face_position.y_offset = boundingRect.Y;
+  response.face_position.width = boundingRect.Width;
+  response.face_position.height = boundingRect.Height;
+  return !NFailed(result);
 }
 
 int main(int argc, char **argv)
@@ -72,7 +78,7 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "enroll_face_node");
   ros::NodeHandle n;
   ros::Subscriber sub = n.subscribe("/usb_cam/image_raw", 10, handleIncomingFrame);
-  ros::ServiceServer service = n.advertiseService("create_face_template", handleEnrollService);
+  ros::ServiceServer service = n.advertiseService("create_face_template", handleCreateService);
 
   // Star ROS node. We need at least two threads so that VeriLook can be
   // supplied with images in the middle of a service call.

@@ -7,8 +7,8 @@ project(ros_verilook)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
-  sensor_msgs
   std_msgs
+  sensor_msgs
   message_generation
 )
 
@@ -57,6 +57,7 @@ add_service_files(
   FILES
   Identify.srv
   CreateTemplate.srv
+  Save.srv
 #   Service1.srv
 #   Service2.srv
 )
@@ -69,10 +70,9 @@ add_service_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  sensor_msgs
+generate_messages(DEPENDENCIES
   std_msgs
+  sensor_msgs
 )
 
 ###################################
@@ -87,7 +87,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES ros_verilook
-  CATKIN_DEPENDS roscpp rospy message_runtime sensor_msgs std_msgs
+  CATKIN_DEPENDS roscpp rospy message_runtime std_msgs sensor_msgs
 #  DEPENDS system_lib
 )
 

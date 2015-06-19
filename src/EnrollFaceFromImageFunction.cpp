@@ -1,6 +1,7 @@
-#include "EnrollFaceFromImageFunction.h"
+#include "EnrollFaceFromImageFunction.hpp"
 
 #include <stdio.h>
+#include <string>
 #include <ros/ros.h>
 
 #include <NCore.h>
@@ -53,7 +54,8 @@ NResult ReleaseComponents()
   return result;
 }
 
-NResult EnrollFaceFromImageFunction(const char *templateFileName, void (*getImage)(HNImage*))
+NResult EnrollFaceFromImageFunction(std::string templateFileName,
+   void (*getImage)(HNImage*), NRect *pBoundingRect)
 {
   HNSubject hSubject = NULL;
   HNFace hFace = NULL;
@@ -68,7 +70,6 @@ NResult EnrollFaceFromImageFunction(const char *templateFileName, void (*getImag
   NResult result = N_OK;
   NInt facesDetected = 0;
   NBiometricStatus biometricStatus = nbsNone;
-  NRect boundingRect;
 
   NBool wasImageNull = NFalse;
   const NChar * szBiometricStatus = NULL;
@@ -249,14 +250,30 @@ NResult EnrollFaceFromImageFunction(const char *templateFileName, void (*getImag
       goto FINALLY;
     }
 
-    result = NFileWriteAllBytesCN(templateFileName, hBuffer);
+    result = NFileWriteAllBytesCN(templateFileName.c_str(), hBuffer);
     if (NFailed(result))
     {
       result = PrintErrorMsgWithLastError(N_T("failed to write template to file (result = %d)!"), result);
       goto FINALLY;
     }
 
-   ROS_INFO("template saved successfully");
+    // retrieve the image from the face captured
+    result = NFaceGetImage(hFace, &hImage);
+    if (NFailed(result))
+    {
+      result = PrintErrorMsgWithLastError(N_T("NFaceGetImage() failed (result = %d)!"), result);
+      goto FINALLY;
+    }
+
+    // save image to file
+    result = NImageSaveToFileEx(hImage, (templateFileName + ".jpg").c_str(), NULL, NULL, 0);
+    if (NFailed(result))
+    {
+      result = PrintErrorMsgWithLastError(N_T("NImageSaveToFileEx() failed (result = %d)!"), result);
+      goto FINALLY;
+    }
+
+    ROS_INFO("template saved successfully");
   }
   else
   {
@@ -319,7 +336,7 @@ NResult EnrollFaceFromImageFunction(const char *templateFileName, void (*getImag
     }
 
     // retrieve face boundingRect information of the face from attributes array
-    result = NLAttributesGetBoundingRect(hLAttributes, &boundingRect);
+    result = NLAttributesGetBoundingRect(hLAttributes, pBoundingRect);
     if (NFailed(result))
     {
       result = PrintErrorMsgWithLastError(N_T("NLAttributesGetBoundingRect() failed (result = %d)!"), result);
@@ -327,8 +344,8 @@ NResult EnrollFaceFromImageFunction(const char *templateFileName, void (*getImag
     }
 
     ROS_INFO("found face: location = (%d, %d), width = %d, height = %d",
-      boundingRect.X, boundingRect.Y,
-      boundingRect.Width, boundingRect.Height);
+      (*pBoundingRect).X, (*pBoundingRect).Y,
+      (*pBoundingRect).Width, (*pBoundingRect).Height);
   }
 
   result = N_OK;
