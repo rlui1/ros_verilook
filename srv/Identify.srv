@@ -1,2 +1,3 @@
 ---
 string handle
+sensory_msgs/RegionOfInterest face_position
