@@ -55,7 +55,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
-  Enroll.srv
+  Identify.srv
+  CreateTemplate.srv
 #   Service1.srv
 #   Service2.srv
 )
@@ -114,8 +115,8 @@ link_directories(sdk/Lib/Linux_x86_64)
 add_definitions("-Wno-write-strings")
 
 ## Declare a cpp executable
-add_executable(EnrollFaceFromROSTopic
-  src/EnrollFaceFromROSTopic.cpp
+add_executable(EnrollFaceFromROSTopicNode
+  src/EnrollFaceFromROSTopicNode.cpp
   src/EnrollFaceFromImageFunction.cpp
 )
 
@@ -124,7 +125,7 @@ add_executable(EnrollFaceFromROSTopic
 # add_dependencies(ros_verilook_node ros_verilook_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(EnrollFaceFromROSTopic
+target_link_libraries(EnrollFaceFromROSTopicNode
   ${catkin_LIBRARIES}
   NBiometricClient
   NBiometrics

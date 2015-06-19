@@ -82,7 +82,7 @@ int main(int argc, char **argv)
   else {printf("License OK");}
 
   ROS_INFO("about to init node");
-  ros::init(argc, argv, "listener");
+  ros::init(argc, argv, "enroll_face_node");
   ROS_INFO("node initialized");
   ros::NodeHandle n;
   ros::Subscriber sub = n.subscribe("/usb_cam/image_raw", 1000, handleIncomingFrame);
