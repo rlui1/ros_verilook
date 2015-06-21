@@ -25,7 +25,8 @@ NResult ObtainComponents(NChar *ipAddress, NChar *port)
   result = NLicenseObtainComponents(ipAddress, port, components, &available);
   if (NFailed(result))
   {
-    result = PrintErrorMsgWithLastError(N_T("(1) NLicenseObtainComponents() failed, result = %d\n"), result);
+    ROS_ERROR("Could not connect to %s:%s license server", ipAddress, port);
+    result = PrintErrorMsgWithLastError(N_T("NLicenseObtainComponents() failed, result = %d"), result);
     return result;
   }
   if (!available)
@@ -39,7 +40,7 @@ NResult ObtainComponents(NChar *ipAddress, NChar *port)
   result = NLicenseObtainComponents(ipAddress, port, additionalComponents, &additionalObtained);
   if (NFailed(result))
   {
-    result = PrintErrorMsgWithLastError(N_T("(2) NLicenseObtainComponents() failed, result = %d\n"), result);
+    result = PrintErrorMsgWithLastError(N_T("NLicenseObtainComponents() failed, result = %d"), result);
     return result;
   }
 }
@@ -48,9 +49,9 @@ NResult ReleaseComponents()
 {
   NResult result = N_OK;
   result = NLicenseReleaseComponents(additionalComponents);
-  if (NFailed(result)) PrintErrorMsg(N_T("NLicenseReleaseComponents() failed, result = %d\n"), result);
+  if (NFailed(result)) PrintErrorMsg(N_T("NLicenseReleaseComponents() failed, result = %d"), result);
   result = NLicenseReleaseComponents(components);
-  if (NFailed(result)) PrintErrorMsg(N_T("NLicenseReleaseComponents() failed, result = %d\n"), result);
+  if (NFailed(result)) PrintErrorMsg(N_T("NLicenseReleaseComponents() failed, result = %d"), result);
   return result;
 }
 
@@ -190,7 +191,7 @@ NResult EnrollFaceFromImageFunction(std::string templateFileName,
       }
       if (hError)
       {
-        result = PrintErrorMsgWithError(N_T("task error:\n"), hError);
+        result = PrintErrorMsgWithError(N_T("task error:"), hError);
         {
           NResult result2 = NObjectSet(NULL, (HNObject*) &hError);
          if (NFailed(result2)) PrintErrorMsg(N_T("NObjectSet() failed (result = %d)!"), result2);
@@ -292,7 +293,7 @@ NResult EnrollFaceFromImageFunction(std::string templateFileName,
       goto FINALLY;
     }
 
-   ROS_INFO("template extraction failed!\nbiometric status = %s", szBiometricStatus);
+   ROS_ERROR("template extraction failed!\nbiometric status = %s", szBiometricStatus);
 
     // retrieve the error message
     {
@@ -306,7 +307,7 @@ NResult EnrollFaceFromImageFunction(std::string templateFileName,
       result = N_E_FAILED;
       if (hError)
       {
-        result = PrintErrorMsgWithError(N_T("task error:\n"), hError);
+        result = PrintErrorMsgWithError(N_T("task error:"), hError);
         {
           NResult result2 = NObjectSet(NULL, (HNObject*) &hError);
           if (NFailed(result2)) PrintErrorMsg(N_T("NObjectSet() failed (result = %d)!"), result2);

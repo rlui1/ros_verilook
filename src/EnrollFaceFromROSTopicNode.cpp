@@ -39,18 +39,26 @@ void handleIncomingFrame(const sensor_msgs::Image::ConstPtr& msg)
   }
   cond.notify_one();
 }
-
+bool cond_predicate()
+{
+  return buffer != 0;
+}
 // Callback, from which EnrollFaceFromImageFunction gets its images.
 void getImage(HNImage *phImage)
 {
   boost::unique_lock<boost::mutex> lock(mtx);
-  while(buffer == 0 && !ros::isShuttingDown())
+  boost::system_time const timeout = boost::get_system_time() + boost::posix_time::seconds(1);
+  if(cond.timed_wait(lock, timeout, cond_predicate))
   {
-      cond.wait(lock);
+    *phImage = buffer;
+    buffer = NULL;
   }
-  *phImage = buffer;
-  buffer = NULL;
+  else
+  {
+    ROS_ERROR("Timed out while waiting on ROS image stream.");
+  }
 }
+
 
 // Invoke the main big "create template" or "enroll face" routine.
 bool handleCreateService(ros_verilook::CreateTemplate::Request& request,
