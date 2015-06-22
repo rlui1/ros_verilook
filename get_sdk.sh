@@ -22,4 +22,9 @@ then
     "$FULL_SDK_NAME/Include/*" \
     -d $DIR
   mv $DIR/$FULL_SDK_NAME $DIR/$SHORT_SDK_NAME
+
+  # Set the license server to be accessible from a remote machine
+  DIR_ACTIVATION=$DIR/$SHORT_SDK_NAME/Bin/Linux_x86_64/Activation
+  cat $DIR_ACTIVATION/pgd.Sample.conf | sed 's/mode = single/#mode = single/' \
+    | sed 's/#mode = server/mode = server/' > $DIR_ACTIVATION/pgd.conf
 fi

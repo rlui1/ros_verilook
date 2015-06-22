@@ -15,7 +15,7 @@
 const NChar * components = { N_T("Biometrics.FaceExtraction") };
 const NChar * additionalComponents = N_T("Biometrics.FaceSegmentsDetection");
 
-NResult ObtainComponents(NChar *ipAddress, NChar *port)
+NResult ObtainComponents(const NChar *ipAddress, const NChar *port)
 {
   NBool available = NFalse;
   NResult result = N_OK;

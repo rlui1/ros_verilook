@@ -77,18 +77,22 @@ bool handleCreateService(ros_verilook::CreateTemplate::Request& request,
 
 int main(int argc, char **argv)
 {
-  // Obtain license
-  NResult result = ObtainComponents(N_T("172.17.42.1"), N_T("5000"));
+  // Initialize ROS node
+  ros::init(argc, argv, "EnrollFaceFromROSTopicNode");
+  ros::NodeHandle n;
+
+  // Obtain VeriLook license
+  std::string licenseServer;
+  ros::param::param<std::string>("~license_server", licenseServer, "127.0.0.1");
+  NResult result = ObtainComponents(N_T(licenseServer.c_str()), N_T("5000"));
   if (NFailed(result)){ return result;}
   else {printf("License OK\n");}
 
-  // Set up ROS node
-  ros::init(argc, argv, "enroll_face_node");
-  ros::NodeHandle n;
+  // Set up topics and services
   ros::Subscriber sub = n.subscribe("/usb_cam/image_raw", 10, handleIncomingFrame);
   ros::ServiceServer service = n.advertiseService("create_face_template", handleCreateService);
 
-  // Star ROS node. We need at least two threads so that VeriLook can be
+  // Start ROS node. We need at least two threads so that VeriLook can be
   // supplied with images in the middle of a service call.
   ros::AsyncSpinner spinner(2);
   spinner.start();

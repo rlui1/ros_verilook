@@ -10,7 +10,13 @@ $ catkin_make
 
 ### Run
 ```bash
-$ rosrun ros_verilook EnrollFaceFromROSTopic
+# Start the VeriLook license server on linux host (not in a docker container)
+$ src/ros_verilook/sdk/Bin/Linux_x86_64/Activation/run_pgd.sh start
+# Point the cpp node to the license server (if ROS is running in docker)
+$ rosparam set EnrollFaceFromROSTopicNode/license_server:=172.17.42.1
+# rosrun nodes
+$ rosrun ros_verilook EnrollFaceFromROSTopicNode
+$ rosrun ros_verilook identify_face_node.py
 ```
 
 ## identify_face_node.py

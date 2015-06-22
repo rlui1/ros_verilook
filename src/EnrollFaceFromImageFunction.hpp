@@ -5,7 +5,7 @@
 #include <Core/NTypes.h>
 #include <NMedia.h>
 
-NResult ObtainComponents(NChar *ipAddress, NChar *port);
+NResult ObtainComponents(const NChar *ipAddress, const NChar *port);
 NResult ReleaseComponents();
 NResult EnrollFaceFromImageFunction(std::string templateFileName,
   void (*getImage)(HNImage*), NRect *boundingRect);
