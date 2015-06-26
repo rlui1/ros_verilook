@@ -1,2 +1,4 @@
 sdk
 sdk.zip
+__pycache__
+*.pyc
