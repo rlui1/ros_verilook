@@ -43,6 +43,8 @@ bool cond_predicate()
 {
   return buffer != 0;
 }
+
+
 // Callback, from which EnrollFaceFromImageFunction gets its images.
 void getImage(HNImage *phImage)
 {

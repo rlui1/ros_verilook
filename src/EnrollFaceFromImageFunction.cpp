@@ -251,7 +251,7 @@ NResult EnrollFaceFromImageFunction(std::string templateFileName,
       goto FINALLY;
     }
 
-    result = NFileWriteAllBytesCN(templateFileName.c_str(), hBuffer);
+    result = NFileWriteAllBytesCN((templateFileName + ".template").c_str(), hBuffer);
     if (NFailed(result))
     {
       result = PrintErrorMsgWithLastError(N_T("failed to write template to file (result = %d)!"), result);

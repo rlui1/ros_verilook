@@ -1,4 +1,5 @@
-sdk
-sdk.zip
 __pycache__
 *.pyc
+sdk
+sdk.zip
+data
