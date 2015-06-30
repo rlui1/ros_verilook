@@ -67,6 +67,10 @@ bool handleCreateService(ros_verilook::CreateTemplate::Request& request,
   ros_verilook::CreateTemplate::Response& response)
 {
   ROS_INFO("create template request: %s", request.output_filename.c_str());
+
+  ros::NodeHandle n;
+  ros::Subscriber sub = n.subscribe("/usb_cam/image_raw", 10, handleIncomingFrame);
+
   NRect boundingRect;
   NResult result = EnrollFaceFromImageFunction(request.output_filename,
     getImage, &boundingRect);
@@ -74,6 +78,10 @@ bool handleCreateService(ros_verilook::CreateTemplate::Request& request,
   response.face_position.y_offset = boundingRect.Y;
   response.face_position.width = boundingRect.Width;
   response.face_position.height = boundingRect.Height;
+
+  // Save CPU usage
+  sub.shutdown();
+
   return !NFailed(result);
 }
 
@@ -81,7 +89,6 @@ int main(int argc, char **argv)
 {
   // Initialize ROS node
   ros::init(argc, argv, "EnrollFaceFromROSTopicNode");
-  ros::NodeHandle n;
 
   // Obtain VeriLook license
   std::string licenseServer;
@@ -90,8 +97,8 @@ int main(int argc, char **argv)
   if (NFailed(result)){ return result;}
   else {printf("License OK\n");}
 
-  // Set up topics and services
-  ros::Subscriber sub = n.subscribe("/usb_cam/image_raw", 10, handleIncomingFrame);
+  // Set up the service
+  ros::NodeHandle n;
   ros::ServiceServer service = n.advertiseService("create_face_template", handleCreateService);
 
   // Start ROS node. We need at least two threads so that VeriLook can be
