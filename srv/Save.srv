@@ -1,3 +1,3 @@
-string handle
-string name
+string handle # Corresponds to the handle in Identify.srv.
+string name # Give the subject a name.
 ---

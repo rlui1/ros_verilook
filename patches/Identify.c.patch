@@ -1,0 +1,28 @@
+36c36
+< 	printf(N_T("\t%s [probe template] [one or more gallery templates]\n"), title);
+---
+> 	printf(N_T("\t%s [license server ip address] [probe template] [one or more gallery templates]\n"), title);
+61c61
+< 	
+---
+> 
+273c273
+< 	if (argc < 3)
+---
+> 	if (argc < 4)
+283c283
+< 		result = NLicenseObtainComponents(N_T("/local"), N_T("5000"), MatchingComponents[i], &available);
+---
+> 		result = NLicenseObtainComponents(N_T(argv[1]), N_T("5000"), MatchingComponents[i], &available);
+327c327
+< 	result = CreateSubject(hProbeSubject, argv[1], hSubjectId);
+---
+> 	result = CreateSubject(hProbeSubject, argv[2], hSubjectId);
+350c350
+< 	for (i = 2; i < argc; i++)
+---
+> 	for (i = 3; i < argc; i++)
+361c361
+< 		result = NStringFormat(&hSubjectId, N_T("GallerySubject_{I32}"), (i - 1));
+---
+> 		result = NStringFormat(&hSubjectId, N_T("GallerySubject_{I32}"), (i - 2));

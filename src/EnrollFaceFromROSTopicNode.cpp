@@ -92,7 +92,7 @@ int main(int argc, char **argv)
 
   // Obtain VeriLook license
   std::string licenseServer;
-  ros::param::param<std::string>("~license_server", licenseServer, "127.0.0.1");
+  ros::param::param<std::string>("vl_license_server", licenseServer, "127.0.0.1");
   NResult result = ObtainComponents(N_T(licenseServer.c_str()), N_T("5000"));
   if (NFailed(result)){ return result;}
   else {printf("License OK\n");}

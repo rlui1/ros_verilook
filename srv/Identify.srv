@@ -1,5 +1,9 @@
 ---
+# 'handle' is a unique identifier of the face in view.
+# If 'matches' array is empty, call '/save_face' with this handle to memorize it.
 string handle
 sensor_msgs/RegionOfInterest face_position
-bool success
+
+# 'matches' will contain names and scores of subjects that were successfully
+# identified as the one from the image stream.
 Match[] matches

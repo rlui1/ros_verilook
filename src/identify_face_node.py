@@ -17,10 +17,12 @@ class Template:
     DIR_SAVED = join(DIR_PKG, 'data/templates/saved')
     DIR_TEMP = join(DIR_PKG, 'data/templates/tmp')
 
+    # Location of used Verilook binaries
     BINARY_IDENTIFY = join(DIR_PKG, 'sdk/Tutorials/Biometrics/C/Identify/Identify')
+    LD_LIBRARY_PATH = join(DIR_PKG, 'sdk/Lib/Linux_x86_64')
 
-    create_template_service = rospy.ServiceProxy('create_face_template',
-        CreateTemplate)
+    create_template_service = rospy.ServiceProxy('create_face_template', CreateTemplate)
+    license_server_ip = rospy.get_param('vl_license_server', '127.0.0.1')
 
 
     def __init__(self, handle, is_saved=False):
@@ -75,8 +77,8 @@ class Template:
         paths = [template.template_file_path for template in saved]
 
         # Helper function for the concurrent execution
-        def load_all_json_data(templates):
-            for t in templates:
+        def load_all_json_data():
+            for t in saved:
                 t._load_json_data()
 
         # Run the 'identify' binary and load json data concurrently,
@@ -84,6 +86,13 @@ class Template:
         futures = [executor.submit(self._run_identify_binary, paths),
                    executor.submit(load_all_json_data)]
         concurrent.futures.wait(futures, timeout=10)
+
+        # Forward any exceptions from child tasks
+        for exception in [future.exception() for future in futures]:
+            if exception:
+                raise exception
+
+        # Get the result of self._run_identify_binary
         idx_scores = futures[0].result()
 
         # Return a list of Match objects
@@ -116,7 +125,7 @@ class Template:
 
 
     def _load_json_data(self):
-        with open(self.json.file_path, 'r') as file:
+        with open(self.json_file_path, 'r') as file:
             self.json_data = json.load(file)
 
 
@@ -135,11 +144,12 @@ class Template:
 
     def _run_identify_binary(self, paths):
         # Spawn VeriLook's 'Identify'.
-        child = pexpect.spawnu('{0} {1}.template {2}'.format(
+        child = pexpect.spawnu('{} {} {} {}'.format(
             self.BINARY_IDENTIFY,
-            self.handle,
+            self.license_server_ip,
+            self.template_file_path,
             ' '.join(paths)
-        ))
+        ), env = {'LD_LIBRARY_PATH': self.LD_LIBRARY_PATH})
         child.logfile = sys.stderr
 
         # Parse output
@@ -161,7 +171,6 @@ def identify_service(req):
     matches = template.identify()
     response = IdentifyResponse(handle=template.handle,
                                 face_position=face_position,
-                                success=len(matches) > 0,
                                 matches=matches)
     return response
 
