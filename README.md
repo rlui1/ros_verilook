@@ -17,7 +17,7 @@ $ src/ros_verilook/sdk/Bin/Linux_x86_64/Activation/run_pgd.sh start
 
 ## Inside Docker
 # Tell ROS nodes where to find the license server.
-$ rosparam vl_license_server 172.17.42.1
+$ rosparam set vl_license_server 172.17.42.1
 # 'rosrun' nodes.
 $ rosrun usb_cam usb_cam_node _pixel_format:=yuyv
 $ rosrun ros_verilook EnrollFaceFromROSTopicNode
@@ -26,6 +26,12 @@ $ rosrun ros_verilook identify_face_node.py
 
 Skip the `rosparam vl_license_server 172.17.42.1` line if ROS is not running in
 docker.
+
+### Test
+
+```bash
+$ nosetests-3.4 -v test/unit
+```
 
 ## identify_face_node.py
 
