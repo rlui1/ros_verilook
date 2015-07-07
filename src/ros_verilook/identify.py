@@ -7,7 +7,7 @@ import concurrent.futures
 import json
 
 import rospy, rospkg
-from ros_verilook.srv import CreateTemplate, Identify, IdentifyResponse, Save, SaveResponse
+from ros_verilook.srv import CreateTemplate
 from ros_verilook.msg import Match
 
 DIR_PKG = rospkg.RosPack().get_path('ros_verilook')
@@ -66,8 +66,11 @@ class Template:
         return join(self.template_folder_path, self.handle + '.json')
 
 
-    def identify(self):
-        """ Find and return saved templates that match this one. """
+    def identify(self, executor):
+        """ Find and return saved templates that match this one.
+
+        The argument 'executor' should be a thread pool. It will be used to call
+        several blocking tasks in parallel to save time. """
 
         # Create template object references to valid saved template files.
         saved = self._get_saved()
@@ -164,27 +167,3 @@ class Template:
             else:
                 break
         return results
-
-
-def identify_service(req):
-    template, face_position = Template.from_camera()
-    matches = template.identify()
-    response = IdentifyResponse(handle=template.handle,
-                                face_position=face_position,
-                                matches=matches)
-    return response
-
-
-def save_service(req):
-    Template(req.handle, is_saved=False).save(req.name)
-    return SaveResponse()
-
-
-if __name__ == '__main__':
-    # Used to call several blocking tasks in parallel to save time.
-    executor = concurrent.futures.ThreadPoolExecutor(max_workers=4)
-
-    rospy.init_node('identify_face_node')
-    rospy.Service('identify_face', Identify, identify_service)
-    rospy.Service('save_face', Save, save_service)
-    rospy.spin()
