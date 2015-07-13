@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   sensor_msgs
   message_generation
+  image_transport
 )
 
 ## System dependencies are found with CMake's conventions
@@ -88,7 +89,7 @@ generate_messages(DEPENDENCIES
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES ros_verilook
-  CATKIN_DEPENDS roscpp rospy message_runtime std_msgs sensor_msgs
+  CATKIN_DEPENDS roscpp rospy message_runtime std_msgs sensor_msgs image_transport
 #  DEPENDS system_lib
 )
 
@@ -181,11 +182,30 @@ target_link_libraries(EnrollFaceFromROSTopicNode
 ## Testing ##
 #############
 
-## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_ros_verilook.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
+if(CATKIN_ENABLE_TESTING)
+  ## Add gtest based cpp test target and link libraries
+  # catkin_add_gtest(${PROJECT_NAME}-test test/test_ros_verilook.cpp)
+  # if(TARGET ${PROJECT_NAME}-test)
+  #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
+  # endif()
 
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)
+  # find_package(rostest REQUIRED)
+  # add_rostest(test/my_first_test.test ARGS myarg1:=true myarg2:=false)
+
+  add_custom_target(run_pgd ./sdk/sdk/Bin/Linux_x86_64/Activation/run_pgd.sh start
+    WORKING_DIRECTORY ../../src/${PROJECT_NAME}
+  )
+
+  ## To use python3 with nosetests call this:
+  ## $ catkin_make test ros_verilook -DNOSETESTS=$(which nosetests-3.4)
+  ##
+  ## But that won't execute the run_pgd dependency for some reason.
+  ## To include the run_pgd dependency call:
+  ## $ cd build && make run_tests
+  ##
+  ## But that will use python2 instead of python3 for testing.
+  ## What to do?
+  catkin_add_nosetests(test/unit
+    DEPENDENCIES run_pgd
+  )
+endif()

@@ -2,6 +2,7 @@
 #include "std_msgs/String.h"
 #include "sensor_msgs/Image.h"
 #include "sensor_msgs/RegionOfInterest.h"
+#include "image_transport/image_transport.h"
 
 #include "ros_verilook/CreateTemplate.h"
 #include "EnrollFaceFromImageFunction.hpp"
@@ -69,7 +70,8 @@ bool handleCreateService(ros_verilook::CreateTemplate::Request& request,
 
   // Subscribe to the image stream
   ros::NodeHandle n;
-  ros::Subscriber sub = n.subscribe("/usb_cam/image_raw", 10, handleIncomingFrame);
+  image_transport::ImageTransport it(n);
+  image_transport::Subscriber sub = it.subscribe("/usb_cam/image_raw", 10, handleIncomingFrame);
 
   // Invoke the main big "create template" or "enroll face" routine.
   NRect boundingRect;
