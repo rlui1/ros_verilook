@@ -62,27 +62,36 @@ void getImage(HNImage *phImage)
 }
 
 
-// Invoke the main big "create template" or "enroll face" routine.
 bool handleCreateService(ros_verilook::CreateTemplate::Request& request,
   ros_verilook::CreateTemplate::Response& response)
 {
   ROS_INFO("create template request: %s", request.output_filename.c_str());
 
+  // Subscribe to the image stream
   ros::NodeHandle n;
   ros::Subscriber sub = n.subscribe("/usb_cam/image_raw", 10, handleIncomingFrame);
 
+  // Invoke the main big "create template" or "enroll face" routine.
   NRect boundingRect;
   NResult result = EnrollFaceFromImageFunction(request.output_filename,
     getImage, &boundingRect);
-  response.face_position.x_offset = boundingRect.X;
-  response.face_position.y_offset = boundingRect.Y;
-  response.face_position.width = boundingRect.Width;
-  response.face_position.height = boundingRect.Height;
 
-  // Save CPU usage
+  // Fill the service response
+  if (NFailed(result))
+  {
+    response.success = false;
+  } else {
+    response.success = true;
+    response.face_position.x_offset = boundingRect.X;
+    response.face_position.y_offset = boundingRect.Y;
+    response.face_position.width = boundingRect.Width;
+    response.face_position.height = boundingRect.Height;
+  }
+
+  // Shutdown the image stream to save CPU usage
   sub.shutdown();
 
-  return !NFailed(result);
+  return true;
 }
 
 int main(int argc, char **argv)

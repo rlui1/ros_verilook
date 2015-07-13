@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 import rospy
 import concurrent.futures
 import os
@@ -10,16 +10,24 @@ from std_srvs.srv import Empty, EmptyResponse
 
 def identify_service(req):
     """ Try to identify the person in the image stream. """
+    rospy.loginfo('Identify request')
     template, face_position = Template.from_camera()
+
+    if template == None:
+        rospy.loginfo('Face capture error')
+        return IdentifyResponse()
+
+    # Success
     matches = template.identify(executor)
-    response = IdentifyResponse(handle=template.handle,
-                                face_position=face_position,
-                                matches=matches)
-    return response
+    rospy.loginfo('{} matches'.format(len(matches)))
+    return IdentifyResponse(handle=template.handle,
+                            face_position=face_position,
+                            matches=matches)
 
 
 def save_service(req):
     """ Memorize a captured face for future identification. """
+    rospy.loginfo('Save request')
     Template(req.handle, is_saved=False).save(req.name)
     return SaveResponse()
 

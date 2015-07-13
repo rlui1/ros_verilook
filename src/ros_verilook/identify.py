@@ -42,15 +42,15 @@ class Template:
 
         # Create files
         os.makedirs(new_template.template_folder_path, exist_ok=True)
-        try:
-            response = cls.create_template_service(
-                join(new_template.template_folder_path, handle)
-            )
-        except rospy.ServiceException:
-            os.removedirs(new_template.template_folder_path)
-            raise
+        response = cls.create_template_service(
+            join(new_template.template_folder_path, handle)
+        )
 
-        return (cls(handle), response.face_position)
+        if response.success:
+            return (cls(handle), response.face_position)
+        else:
+            os.removedirs(new_template.template_folder_path)
+            return (None, None)
 
 
     @property
