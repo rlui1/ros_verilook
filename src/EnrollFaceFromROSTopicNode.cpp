@@ -68,6 +68,9 @@ bool handleCreateService(ros_verilook::CreateTemplate::Request& request,
 {
   ROS_INFO("create template request: %s", request.output_filename.c_str());
 
+  // Free a possible leftover frame from last service call.
+  NObjectSet(NULL, (HNObject*) &buffer);
+
   // Subscribe to the image stream
   ros::NodeHandle n;
   image_transport::ImageTransport it(n);
