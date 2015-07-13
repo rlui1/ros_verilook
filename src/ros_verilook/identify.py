@@ -22,7 +22,7 @@ class Template:
     LD_LIBRARY_PATH = join(DIR_PKG, 'sdk/Lib/Linux_x86_64')
 
     create_template_service = rospy.ServiceProxy('create_face_template', CreateTemplate)
-    license_server_ip = rospy.get_param('vl_license_server', '127.0.0.1')
+    license_server_ip = '127.0.0.1'
 
 
     def __init__(self, handle, is_saved=False):
