@@ -18,8 +18,8 @@ class Template:
     DIR_TEMP = join(DIR_PKG, 'data/templates/tmp')
 
     # Location of used Verilook binaries
-    BINARY_IDENTIFY = join(DIR_PKG, 'sdk/Tutorials/Biometrics/C/Identify/Identify')
-    LD_LIBRARY_PATH = join(DIR_PKG, 'sdk/Lib/Linux_x86_64')
+    BINARY_IDENTIFY = join(DIR_PKG, 'sdk/sdk/Tutorials/Biometrics/C/Identify/Identify')
+    LD_LIBRARY_PATH = join(DIR_PKG, 'sdk/sdk/Lib/Linux_x86_64')
 
     create_template_service = rospy.ServiceProxy('create_face_template', CreateTemplate)
     license_server_ip = '127.0.0.1'
@@ -47,8 +47,10 @@ class Template:
         )
 
         if response.success:
+            # Success
             return (cls(handle), response.face_position)
         else:
+            # Could not extract the face.
             os.removedirs(new_template.template_folder_path)
             return (None, None)
 

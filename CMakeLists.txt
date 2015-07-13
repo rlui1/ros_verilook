@@ -101,7 +101,7 @@ catkin_package(
 # include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
-  sdk/Include
+  sdk/sdk/Include
 )
 
 ## Declare a cpp library
@@ -109,10 +109,10 @@ include_directories(
 #   src/${PROJECT_NAME}/ros_verilook.cpp
 # )
 
-# Link Verilook libraries
-link_directories(sdk/Lib/Linux_x86_64)
+## Link Verilook libraries
+link_directories(sdk/sdk/Lib/Linux_x86_64)
 
-# Supress c++ string to c string conversion warnings
+## Supress c++ string to c string conversion warnings
 add_definitions("-Wno-write-strings")
 
 ## Declare a cpp executable
@@ -120,6 +120,12 @@ add_executable(EnrollFaceFromROSTopicNode
   src/EnrollFaceFromROSTopicNode.cpp
   src/EnrollFaceFromImageFunction.cpp
 )
+
+## Download Verilook SDK before building the cpp node
+add_custom_target(get_sdk bash -c ./sdk/get_sdk.sh
+  WORKING_DIRECTORY ../../src/${PROJECT_NAME}
+)
+add_dependencies(EnrollFaceFromROSTopicNode get_sdk)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
