@@ -4,33 +4,31 @@ ROS bridge to some of VeriLook SDK's functionality.
 
 ### Build
 ```bash
-$ src/ros_verilook/get_sdk.sh
+$ apt-get install -y unzip ros-indigo-compressed-image-transport
 $ catkin_make
+$ roscd ros_verilook
+$ pip3 install -r requirements.txt
 ```
 
 ### Run
 
-```bash
-## Outside Docker
-# Start the VeriLook license server (binds to the 5000 port).
-$ src/ros_verilook/sdk/Bin/Linux_x86_64/Activation/run_pgd.sh start
+**Note:** VeriLook license server requires the docker container to be run with the `--net=host` flag.
 
-## Inside Docker
-# Tell ROS nodes where to find the license server.
-$ rosparam set vl_license_server 172.17.42.1
+```bash
+# Start the VeriLook license server (binds to the 5000 port).
+$ roscd ros_verilook
+$ ./sdk/pgd_start.sh
 # 'rosrun' nodes.
 $ rosrun usb_cam usb_cam_node _pixel_format:=yuyv
 $ rosrun ros_verilook EnrollFaceFromROSTopicNode
 $ rosrun ros_verilook identify_face_node.py
 ```
 
-Skip the `rosparam vl_license_server 172.17.42.1` line if ROS is not running in
-docker.
-
 ### Test
 
 ```bash
 $ nosetests-3.4 -v test/unit
+$ rostest test/rostest/save_and_identify.test
 ```
 
 ## identify_face_node.py

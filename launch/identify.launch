@@ -1,0 +1,13 @@
+<launch>
+  <node name="pgd_start" pkg="ros_verilook" type="pgd_start.sh" />
+
+  <node pkg="ros_verilook"
+        type="EnrollFaceFromROSTopicNode"
+        name="EnrollFaceFromROSTopic">
+        <param name="image_transport" value="compressed" />
+  </node>
+
+  <node pkg="ros_verilook"
+        type="identify_face_node.py"
+        name="identify_face_node" />
+</launch>
