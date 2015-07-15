@@ -27,6 +27,7 @@ $ rosrun ros_verilook identify_face_node.py
 ### Test
 
 ```bash
+$ ./sdk/pgd_start.sh
 $ nosetests-3.4 -v test/unit
 $ rostest test/rostest/save_and_identify.test
 ```

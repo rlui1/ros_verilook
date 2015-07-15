@@ -67,7 +67,11 @@ class TestSaveAndIdentify(unittest.TestCase):
     def _identify_or_save(self, index):
         """ Try to identify the face in current view.
         Memorize the face if identification unsuccessful. """
-        response = self.identify_service()
+
+        # Use timeout=3 seconds, because using our quick-paced bagfiles
+        # we need to identify faces rapidly, i.e. if a match is not found,
+        # decide so quicker.
+        response = self.identify_service(timeout=3)
 
         if len(response.handle) == 0:
             # Face capture unsuccessful

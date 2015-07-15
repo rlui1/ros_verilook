@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import rospy
 import concurrent.futures
+import threading
+from copy import copy
 import os
 
 from ros_verilook.srv import Identify, IdentifyResponse, Save, SaveResponse
@@ -9,26 +11,58 @@ from std_srvs.srv import Empty, EmptyResponse
 
 
 def identify_service(req):
-    """ Try to identify the person in the image stream. """
+    """ Try to identify the person in the image stream. Timeout can be given as
+    an argument if there is a need to identify faces rapidly. """
+
     rospy.loginfo('Identify request')
+
+    # Fill the 'response' with as much data as 'capture_and_identify' can
+    # in the given timeout.
+    response = IdentifyResponse()
+    lock = threading.Lock()
+    future = executor.submit(_capture_and_identify, response, lock)
+    try:
+        timeout = req.timeout if req.timeout > 0 else None
+        future.result(timeout=timeout)
+    except concurrent.futures._base.TimeoutError:
+        pass
+
+    # Use the response no matter if 'capture_and_identify' is finished or not.
+    with lock:
+        response = copy(response)
+
+    rospy.loginfo('{} matches'.format(len(response.matches)))
+    return response
+
+
+def _capture_and_identify(response, lock):
+    # Capture face from image stream
     template, face_position = Template.from_camera()
 
     if template == None:
         rospy.loginfo('Face capture error')
-        return IdentifyResponse()
+        return
 
-    # Success
+    # Face captured, partially fill the response
+    with lock:
+        response.handle = template.handle
+        response.face_position = face_position
+
+    # Identify the captured face among the memorized ones
     matches = template.identify(executor)
-    rospy.loginfo('{} matches'.format(len(matches)))
-    return IdentifyResponse(handle=template.handle,
-                            face_position=face_position,
-                            matches=matches)
+
+    # Fill the response with 0 or more matches.
+    with lock:
+        response.matches = matches
 
 
 def save_service(req):
     """ Memorize a captured face for future identification. """
     rospy.loginfo('Save request')
-    Template(req.handle, is_saved=False).save(req.name)
+    try:
+        Template(req.handle, is_saved=False).save(req.name)
+    except FileNotFoundError:
+        pass
     return SaveResponse()
 
 

@@ -1,5 +1,11 @@
+# Optional argument.
+#
+# Identification process can last up to 10 seconds. Set 'timeout' to something
+# smaller to return the 'handle' quicker even if that means interrupting the
+# identification.
+float32 timeout
 ---
-# 'handle' is a unique identifier of the face in view.
+# 'handle' is a unique identifier of the face in view, even if it's not identified.
 # If 'matches' array is empty, call '/save_face' with this handle to memorize it.
 string handle
 sensor_msgs/RegionOfInterest face_position

@@ -90,12 +90,7 @@ class Template:
         # because both take some time to complete.
         futures = [executor.submit(self._run_identify_binary, paths),
                    executor.submit(load_all_json_data)]
-
-        # The identify binary can work for up to six seconds, but if it doesn't
-        # succeed in two seconds, it probably won't at all.
-        done, not_done = concurrent.futures.wait(futures, timeout=2)
-        if len(done) < 2:
-            return []
+        concurrent.futures.wait(futures)
 
         # Forward any exceptions from child tasks
         for exception in [future.exception() for future in futures]:
